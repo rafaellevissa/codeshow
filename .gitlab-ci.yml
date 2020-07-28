@@ -1,0 +1,66 @@
+stages:
+  - pushToGithub
+  - test
+  - build
+  - delpoyToAws
+
+pushToGithub:
+  stage: pushToGithub
+  image: alpine
+  script:
+    - apk add openssh
+    - apk add bash
+    - apk add git
+    - mkdir ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS_GITHUB" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    # add ssh key stored in SSH_PRIVATE_KEY variable to the agent store
+    - eval $(ssh-agent -s)
+    - bash -c 'ssh-add <(echo "$SSH_PRIVATE_KEY_GITHUB")'
+    - cd /
+    - git clone $CI_REPOSITORY_URL app
+    - cd app
+    - git remote add github git@github.com:rafaellevissa/codeshow.git
+    - git push github master
+
+test:
+  stage: test
+  image: python
+  script:
+    - echo "teste"
+ 
+build:
+  image: docker
+  services:
+    - docker:dind
+  stage: build
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+
+
+delpoyToAws:
+  stage: delpoyToAws
+  image: alpine
+  variables:
+    SERVER: 18.188.74.231
+    PORT: 5000
+  script:
+    - apk add openssh
+    - apk add bash
+    - mkdir ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS_AWS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    # add ssh key stored in SSH_PRIVATE_KEY variable to the agent store
+    - eval $(ssh-agent -s)
+    - bash -c 'ssh-add <(echo "$SSH_PRIVATE_KEY_AWS")'
+    # log into Docker registry
+    #- ssh deployer@$SERVER "docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com"
+    - ssh ubuntu@$SERVER "echo $CI_BUILD_TOKEN | docker login --username gitlab-ci-token --password-stdin registry.gitlab.com"
+    # stop container, remove image.
+    - ssh ubuntu@$SERVER "docker container stop ${CI_COMMIT_REF_SLUG}" || true
+    - ssh ubuntu@$SERVER "docker container rm ${CI_COMMIT_REF_SLUG}" || true
+    - ssh ubuntu@$SERVER "docker image rm ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}" || true
+    # start new container
+    - ssh ubuntu@$SERVER "docker container run --name ${CI_COMMIT_REF_SLUG} -p $PORT:5000 -d ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
