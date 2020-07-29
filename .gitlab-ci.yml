@@ -44,7 +44,7 @@ delpoyToAws:
   stage: delpoyToAws
   image: alpine
   variables:
-    SERVER: 3.19.241.64
+    SERVER: 18.191.175.195
     PORT: 5000
   script:
     - apk add openssh
