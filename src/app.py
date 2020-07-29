@@ -12,7 +12,7 @@ app = Flask(__name__)
 @app.route("/", methods=['GET'])
 def hello():
     #curl -i http://$Server_IP:$Server_Port/
-    resposta="API Rest - Galeria de fotos - Checkpoint Date/Time: "+time.strftime("%c")+"\n"
+    resposta="[{\"message\":\"API Rest - Galeria de fotos - Checkpoint Date/Time"+time.strftime("%c")+"\"}]"
     return Response(resposta, status=200, mimetype='application/json')
 
 @app.route("/init")
@@ -32,9 +32,9 @@ def insertuser():
     controllerUser.setUf(req_json["uf"])    
     try:
         controllerUser.AddUser()
-        return Response("id: 0\n", status=200, mimetype='application/json')
+        return Response("[{ \"message\":\"user added, \"id\": \"0\"", status=200, mimetype='application/json')
     except:
-        return Response(" ## user wasn't added ## \n", status=400, mimetype='application/json')    
+        return Response("[{ \"message\":\"user wasn't added\"}]", status=400, mimetype='application/json')    
     
 @app.route("/users/<id>", methods=['GET'])
 def getuser(id):
@@ -42,9 +42,9 @@ def getuser(id):
     controllerUser = ControllerUser()
     data = controllerUser.GetUserById(id)
     if data:
-        return Response(str(data[0])+"\n", status=200, mimetype='application/json')
+        return Response("[{ \"usuario: \""+str(data[0])+"\"", status=200, mimetype='application/json')
     else:
-        return Response("## User not found ##", status=400, mimetype='application/json') 
+        return Response("[{ \"message\":\"User not found\"}]", status=400, mimetype='application/json') 
 
 @app.route("/users/removeuser/<id>")
 def deluser(id):
@@ -52,9 +52,9 @@ def deluser(id):
     controllerUser = ControllerUser()
     try:
         controllerUser.DeleteUser(id)
-        return Response(" ## User was deleted ##\n", status=200, mimetype="application/json")
+        return Response("[{ \"message\":\"User was deleted\"}]", status=200, mimetype="application/json")
     except:
-        return Response(" ## User wasn't deleted ##\n", status=400, mimetype="application/json")
+        return Response("[{ \"message\":\"User wasn't deleted\"}]", status=400, mimetype="application/json")
 
 @app.route("/image", methods=['POST'])
 def insertImage():
@@ -66,9 +66,9 @@ def insertImage():
        
     try:
         controllerImage.AddImage()
-        return Response("ok: \n", status=200, mimetype='application/json')        
+        return Response("[{ \"message\":\"Image was added\"}]", status=200, mimetype='application/json')        
     except:
-        return Response(" ## image wasn't added ## \n", status=400, mimetype='application/json')    
+        return Response("[{ \"message\":\"Image wasn't added\"}]", status=400, mimetype='application/json')    
 
 
 if __name__ == "__main__":

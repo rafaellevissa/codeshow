@@ -12,8 +12,8 @@ class DbInit(object):
             MAIN_DB.execute("use account")
             MAIN_DB.execute('CREATE TABLE `users`(`id` int AUTO_INCREMENT PRIMARY KEY, `nome` varchar(20), `email` varchar(250), `cidade` varchar(100),`uf` varchar(3))')            
             db.commit()
-            return "## Database create new account table done ##\n"
+            return "[{ \"message\":\"Database create new account table done\"}]"
         except:
-            return "Erro ao iniciar o banco"    
+            return "[{ \"message\":\"Erro ao iniciar o banco\"}]"    
 
         
